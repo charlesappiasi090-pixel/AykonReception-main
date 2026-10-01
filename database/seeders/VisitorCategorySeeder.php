@@ -57,7 +57,10 @@ class VisitorCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            VisitorCategory::create($category);
+            VisitorCategory::updateOrCreate(
+                ['slug' => $category['slug']],
+                $category
+            );
         }
     }
 }

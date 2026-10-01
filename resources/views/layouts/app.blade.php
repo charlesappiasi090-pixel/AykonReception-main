@@ -414,11 +414,11 @@
         </div>
 
         @auth
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
                 </a>
-                <a href="{{ route('admin.users') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.users') }}" class="{{ request()->routeIs('admin.users*') ? 'active' : '' }}">
                     <i class="bi bi-people me-2"></i>User Management
                 </a>
                 <!-- <a href="{{ route('admin.settings') }}" class="{{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
@@ -431,7 +431,7 @@
                     <i class="bi bi-heart-pulse me-2"></i>System Health
                 </a> -->
                 <hr style="border-color: #1b263b; margin: 10px 0;">
-            @elseif(auth()->user()->role === 'staff')
+            @elseif(auth()->user()->isStaff())
                 <a href="{{ route('staff_dashboard') }}" class="{{ request()->routeIs('staff_dashboard') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 me-2"></i>Staff Dashboard
                 </a>
@@ -441,7 +441,7 @@
                 </a>
             @endif
 
-            @if(in_array(auth()->user()->role, ['admin', 'receptionist']))
+            @if(auth()->user()->isAdmin() || auth()->user()->isReceptionist())
                 <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.*') ? 'active' : '' }}">
                     <i class="bi bi-people me-2"></i>Staff
                 </a>
@@ -453,13 +453,13 @@
                 </a>
             @endif
 
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()->isAdmin())
                 <a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">
                     <i class="bi bi-graph-up me-2"></i>Reports
                 </a>
             @endif
 
-            @if(in_array(auth()->user()->role, ['receptionist', 'staff']))
+            @if(auth()->user()->isReceptionist() || auth()->user()->isStaff())
                 <a href="{{ route('messages.index') }}" class="{{ request()->routeIs('messages.*') ? 'active' : '' }}">
                     <i class="bi bi-chat-dots me-2"></i>Messages
                     @php
@@ -486,7 +486,7 @@
 
             @auth
             <div class="d-flex align-items-center gap-3">
-                @if(in_array(auth()->user()->role, ['receptionist', 'admin']))
+                @if(auth()->user()->isAdmin() || auth()->user()->isReceptionist())
                 <!-- Notifications -->
                 <div class="position-relative" style="position: relative;">
                     <div class="notification-bell" onclick="toggleNotifications()" title="Notifications">
@@ -598,7 +598,7 @@
 
     @yield('scripts')
 
-    @if(in_array(auth()->user()->role ?? '', ['receptionist', 'admin']))
+    @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isReceptionist()))
     <!-- Notification System -->
     <script>
         let notificationCheckInterval;

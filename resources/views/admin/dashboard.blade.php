@@ -307,7 +307,7 @@
                                 </small>
                             </div>
                             <div class="text-end">
-                                <small class="text-muted">{{ $visitor->created_at->diffForHumans() }}</small>
+                                <small class="text-muted">{{ $visitor->created_at ? $visitor->created_at->diffForHumans() : 'N/A' }}</small>
                             </div>
                         </div>
                         @empty
@@ -336,7 +336,7 @@
                                 </small>
                             </div>
                             <div class="text-end">
-                                <small class="text-muted">{{ \Carbon\Carbon::parse($appointment->appointment_time)->diffForHumans() }}</small>
+                                <small class="text-muted">{{ $appointment->appointment_time ? \Carbon\Carbon::parse($appointment->appointment_time)->diffForHumans() : 'N/A' }}</small>
                             </div>
                         </div>
                         @empty

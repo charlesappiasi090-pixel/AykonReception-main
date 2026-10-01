@@ -13,17 +13,20 @@ Auth::routes();
 Route::get('/', function () {
     if (auth()->check()) {
         $user = auth()->user();
-        switch ($user->role) {
-            case 'receptionist':
-                return redirect()->route('dashboard');
-            case 'admin':
-                return redirect()->route('admin.dashboard');
-            default:
-                return redirect()->route('dashboard');
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
         }
+        if ($user->isStaff()) {
+            return redirect()->route('staff_dashboard');
+        }
+        return redirect()->route('dashboard');
     }
     return redirect()->route('login');
 })->name('home');
+
+Route::get('/home', function () {
+    return redirect()->route('home');
+});
 
 Route::get('/check-in', [VisitorController::class, 'publicCheckIn'])->name('check-in');
 Route::post('/check-in', [VisitorController::class, 'publicStore'])->name('check-in.store');

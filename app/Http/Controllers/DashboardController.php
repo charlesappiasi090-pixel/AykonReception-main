@@ -12,6 +12,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        if (auth()->check()) {
+            if (auth()->user()->isAdmin()) {
+                return redirect()->route('admin.dashboard');
+            }
+            if (auth()->user()->isStaff()) {
+                return redirect()->route('staff_dashboard');
+            }
+        }
+
         $visitorsToday = Visitors::whereDate('created_at', today())->count();
         $checkedIn = Visitors::whereDate('created_at', today())->count();
         $upcomingAppointments = Appointments::where('appointment_time', '>', now())->get();

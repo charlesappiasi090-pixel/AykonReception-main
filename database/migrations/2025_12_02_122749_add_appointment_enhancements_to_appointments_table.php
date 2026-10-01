@@ -37,7 +37,7 @@ return new class extends Migration
         });
 
         // Add foreign key constraints separately if tables exist
-        if (Schema::hasTable('recurring_appointments') && Schema::hasColumn('appointments', 'recurring_appointment_id')) {
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb']) && Schema::hasTable('recurring_appointments') && Schema::hasColumn('appointments', 'recurring_appointment_id')) {
             $foreignKeys = DB::select("
                 SELECT CONSTRAINT_NAME 
                 FROM information_schema.KEY_COLUMN_USAGE 
@@ -54,7 +54,7 @@ return new class extends Migration
             }
         }
 
-        if (Schema::hasTable('users') && Schema::hasColumn('appointments', 'rescheduled_by')) {
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb']) && Schema::hasTable('users') && Schema::hasColumn('appointments', 'rescheduled_by')) {
             $foreignKeys = DB::select("
                 SELECT CONSTRAINT_NAME 
                 FROM information_schema.KEY_COLUMN_USAGE 

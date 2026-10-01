@@ -569,22 +569,35 @@
     </div>
 
     <script>
-        // Form validation enhancement
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            const email = document.getElementById('email').value;
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.querySelector('.btn-login');
+        const defaultLoginBtnHtml = '<i class="bi bi-box-arrow-in-right"></i><span>Sign In</span>';
+
+        // Reset button state when navigating back or restoring page from cache
+        window.addEventListener('pageshow', function() {
+            if (loginBtn) {
+                loginBtn.innerHTML = defaultLoginBtnHtml;
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Form validation and loading state
+        loginForm.addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             
             if (!email || !password) {
                 e.preventDefault();
                 return false;
             }
-        });
 
-        // Add loading state to button
-        document.getElementById('loginForm').addEventListener('submit', function() {
-            const btn = document.querySelector('.btn-login');
-            btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span>Signing in...</span>';
-            btn.disabled = true;
+            if (loginBtn) {
+                loginBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span>Signing in...</span>';
+                // Defer disabling the button so native form submission is never interrupted
+                setTimeout(function() {
+                    loginBtn.disabled = true;
+                }, 10);
+            }
         });
     </script>
 </body>

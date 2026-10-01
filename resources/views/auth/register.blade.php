@@ -642,8 +642,19 @@
     </div>
 
     <script>
-        // Form validation enhancement
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const registerForm = document.getElementById('registerForm');
+        const registerBtn = document.querySelector('.btn-register');
+        const defaultRegisterBtnHtml = '<i class="bi bi-person-plus"></i><span>Create Account</span>';
+
+        window.addEventListener('pageshow', function() {
+            if (registerBtn) {
+                registerBtn.innerHTML = defaultRegisterBtnHtml;
+                registerBtn.disabled = false;
+            }
+        });
+
+        // Form validation and loading state
+        registerForm.addEventListener('submit', function(e) {
             const password = document.getElementById('password').value;
             const passwordConfirmation = document.getElementById('password_confirmation').value;
             
@@ -652,13 +663,13 @@
                 alert('Passwords do not match. Please try again.');
                 return false;
             }
-        });
 
-        // Add loading state to button
-        document.getElementById('registerForm').addEventListener('submit', function() {
-            const btn = document.querySelector('.btn-register');
-            btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span>Creating account...</span>';
-            btn.disabled = true;
+            if (registerBtn) {
+                registerBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span>Creating account...</span>';
+                setTimeout(function() {
+                    registerBtn.disabled = true;
+                }, 10);
+            }
         });
 
         // Real-time password match validation

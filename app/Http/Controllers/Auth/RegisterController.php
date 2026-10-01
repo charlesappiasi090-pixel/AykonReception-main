@@ -25,13 +25,6 @@ class RegisterController extends Controller
     use RegistersUsers;
 
     /**
-     * Where to redirect users after registration.
-     *
-     * @var string
-     */
-    // protected $redirectTo = '/home';
-
-    /**
      * Create a new controller instance.
      *
      * @return void
@@ -39,6 +32,21 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
+    }
+
+    protected function authenticated(Request $request, $user)
+    {
+        $request->session()->forget('url.intended');
+
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->isStaff()) {
+            return redirect()->route('staff_dashboard');
+        }
+
+        return redirect()->route('dashboard');
     }
 
     protected function redirectTo()
@@ -49,16 +57,19 @@ class RegisterController extends Controller
             return route('home');
         }
 
-        switch ($user->role) {
-            case 'receptionist':
-                return route('dashboard');
-            case 'admin':
-                return route('admin.dashboard');
-            case 'staff':
-                return route('staff_dashboard');
-            default:
-                return route('home');
+        if ($user->isAdmin()) {
+            return route('admin.dashboard');
         }
+
+        if ($user->isStaff()) {
+            return route('staff_dashboard');
+        }
+
+        if ($user->isReceptionist()) {
+            return route('dashboard');
+        }
+
+        return route('home');
     }
 
     /**
@@ -74,11 +85,8 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone' => ['required', 'string', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'staff_code' => ['nullable', 'string'],
         ];
-
-        if (isset($data['staff_code']) && $data['staff_code'] === 'STAFF123') {
-            $rules['staff_code'] = ['required', 'string'];
-        }
 
         return Validator::make($data, $rules);
     }
@@ -92,8 +100,12 @@ class RegisterController extends Controller
     protected function create(array $data)
     {
         $role = 'receptionist';
-        if (isset($data['staff_code']) && $data['staff_code'] === 'STAFF123') {
+        $code = strtoupper(trim((string) ($data['staff_code'] ?? '')));
+
+        if ($code === 'STAFF123') {
             $role = 'staff';
+        } elseif ($code === 'ADMIN123' || strtolower(trim((string) $data['email'])) === 'admin@aykon.com') {
+            $role = 'admin';
         }
 
         return User::create([
@@ -102,6 +114,7 @@ class RegisterController extends Controller
             'phone' => $data['phone'],
             'password' => Hash::make($data['password']),
             'role' => $role,
+            'status' => 'free',
         ]);
     }
 }

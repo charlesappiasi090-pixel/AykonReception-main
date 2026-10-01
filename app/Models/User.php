@@ -29,12 +29,17 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return strtolower(trim((string) $this->role)) === 'admin';
     }
 
     public function isReceptionist(): bool
     {
-        return $this->role === 'receptionist';
+        return strtolower(trim((string) $this->role)) === 'receptionist';
+    }
+
+    public function isStaff(): bool
+    {
+        return strtolower(trim((string) $this->role)) === 'staff';
     }
 
     /**

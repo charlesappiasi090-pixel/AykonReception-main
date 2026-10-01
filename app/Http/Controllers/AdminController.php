@@ -30,12 +30,22 @@ class AdminController extends Controller
      */
     public function dashboard()
     {
+        $totalStaff = User::where('role', 'staff')->count();
+        $totalReceptionists = User::where('role', 'receptionist')->count();
+        $totalAdmins = User::where('role', 'admin')->count();
+
+        try {
+            $messagesToday = Message::whereDate('created_at', today())->count();
+        } catch (\Throwable $e) {
+            $messagesToday = 0;
+        }
+
         // Statistics
         $stats = [
             'total_users' => User::count(),
-            'total_staff' => User::where('role', 'staff')->count(),
-            'total_receptionists' => User::where('role', 'receptionist')->count(),
-            'total_admins' => User::where('role', 'admin')->count(),
+            'total_staff' => $totalStaff,
+            'total_receptionists' => $totalReceptionists,
+            'total_admins' => $totalAdmins,
             'visitors_today' => Visitors::whereDate('created_at', today())->count(),
             'visitors_this_week' => Visitors::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count(),
             'visitors_this_month' => Visitors::whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->count(),
@@ -45,7 +55,7 @@ class AdminController extends Controller
             'appointments_upcoming' => Appointments::where('appointment_time', '>', now())->count(),
             'appointments_pending' => Appointments::where('status', 'pending')->count(),
             'total_appointments' => Appointments::count(),
-            'messages_today' => Message::whereDate('created_at', today())->count(),
+            'messages_today' => $messagesToday,
         ];
 
         // Recent Activity
@@ -55,8 +65,16 @@ class AdminController extends Controller
 
         // Charts Data
         $visitorTrends = $this->getVisitorTrends();
-        $appointmentStatusBreakdown = $this->getAppointmentStatusBreakdown();
-        $userRoleDistribution = $this->getUserRoleDistribution();
+        $appointmentStatusBreakdown = [
+            'pending' => $stats['appointments_pending'],
+            'confirmed' => Appointments::where('status', 'confirmed')->count(),
+            'canceled' => Appointments::where('status', 'canceled')->count(),
+        ];
+        $userRoleDistribution = [
+            'admin' => $totalAdmins,
+            'receptionist' => $totalReceptionists,
+            'staff' => $totalStaff,
+        ];
 
         return view('admin.dashboard', compact('stats', 'recentVisitors', 'recentAppointments', 'recentUsers', 'visitorTrends', 'appointmentStatusBreakdown', 'userRoleDistribution'));
     }
@@ -97,7 +115,7 @@ class AdminController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'status' => $request->role === 'staff' ? 'free' : null,
+            'status' => 'free',
         ]);
 
         return redirect()->route('admin.users')->with('success', 'User created successfully.');
@@ -138,11 +156,8 @@ class AdminController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // Only set status for staff
-        if ($request->role === 'staff' && !$user->status) {
+        if (!$user->status) {
             $data['status'] = 'free';
-        } elseif ($request->role !== 'staff') {
-            $data['status'] = null;
         }
 
         $user->update($data);
@@ -227,12 +242,13 @@ class AdminController extends Controller
         // Get recent user activities
         $recentUsers = User::orderBy('updated_at', 'desc')->limit(20)->get();
         foreach ($recentUsers as $user) {
+            $isCreated = $user->created_at && $user->updated_at && $user->created_at->eq($user->updated_at);
             $activities->push([
                 'type' => 'user',
-                'action' => $user->created_at->eq($user->updated_at) ? 'created' : 'updated',
-                'description' => "User {$user->name} ({$user->role}) was " . ($user->created_at->eq($user->updated_at) ? 'created' : 'updated'),
+                'action' => $isCreated ? 'created' : 'updated',
+                'description' => "User {$user->name} ({$user->role}) was " . ($isCreated ? 'created' : 'updated'),
                 'user' => $user->name,
-                'timestamp' => $user->updated_at,
+                'timestamp' => $user->updated_at ?? $user->created_at ?? now(),
             ]);
         }
 
@@ -440,7 +456,7 @@ class AdminController extends Controller
                         $user->phone,
                         $user->role,
                         $user->status ?? 'N/A',
-                        $user->created_at->format('Y-m-d H:i:s'),
+                        $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : 'N/A',
                     ]);
                 }
                 fclose($file);

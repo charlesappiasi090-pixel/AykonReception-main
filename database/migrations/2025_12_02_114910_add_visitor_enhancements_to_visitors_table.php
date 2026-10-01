@@ -40,7 +40,7 @@ return new class extends Migration
         });
 
         // Add foreign key constraint separately if it doesn't exist
-        if (Schema::hasColumn('visitors', 'category_id') && Schema::hasTable('visitor_categories')) {
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb']) && Schema::hasColumn('visitors', 'category_id') && Schema::hasTable('visitor_categories')) {
             $foreignKeys = DB::select("
                 SELECT CONSTRAINT_NAME 
                 FROM information_schema.KEY_COLUMN_USAGE 
@@ -63,21 +63,23 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('visitors', function (Blueprint $table) {
-            // Check if foreign key exists before dropping
-            $foreignKeys = DB::select("
-                SELECT CONSTRAINT_NAME 
-                FROM information_schema.KEY_COLUMN_USAGE 
-                WHERE TABLE_SCHEMA = DATABASE() 
-                AND TABLE_NAME = 'visitors' 
-                AND COLUMN_NAME = 'category_id' 
-                AND REFERENCED_TABLE_NAME IS NOT NULL
-            ");
-            
-            if (!empty($foreignKeys)) {
-                $table->dropForeign(['category_id']);
-            }
-        });
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'])) {
+            Schema::table('visitors', function (Blueprint $table) {
+                // Check if foreign key exists before dropping
+                $foreignKeys = DB::select("
+                    SELECT CONSTRAINT_NAME 
+                    FROM information_schema.KEY_COLUMN_USAGE 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'visitors' 
+                    AND COLUMN_NAME = 'category_id' 
+                    AND REFERENCED_TABLE_NAME IS NOT NULL
+                ");
+                
+                if (!empty($foreignKeys)) {
+                    $table->dropForeign(['category_id']);
+                }
+            });
+        }
 
         Schema::table('visitors', function (Blueprint $table) {
             $columnsToDrop = [];
